@@ -9,6 +9,7 @@ var tar = require('tar');
 var fsNode = require('fs');
 var fstream = require('fstream');
 var md5 = require('md5');
+var spawn = require('child_process').spawn;
 var _ = require('lodash');
 
 var cacheVersion = '1';
@@ -152,14 +153,10 @@ CacheDependencyManager.prototype.extractDependencies = function (cachePath, call
     self.cacheLogInfo('done extracting');
     callback();
   }
-
-  var extractor = tar.Extract({path: targetPath})
-                     .on('error', onError)
-                     .on('end', onEnd);
-
-  fs.createReadStream(cachePath)
-    .on('error', onError)
-    .pipe(extractor);
+  
+  var tarProcess = spawn('tar', ['-C', targetPath, '-xf', cachePath]);
+  tarProcess.stderr.on('data', onError);
+  tarProcess.on('close', onEnd);
 };
 
 
